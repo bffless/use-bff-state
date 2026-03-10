@@ -83,12 +83,12 @@ Provider component that wraps your app and provides configuration.
 
 #### Provider Options
 
-| Option        | Type                                         | Default     | Description                                      |
-| ------------- | -------------------------------------------- | ----------- | ------------------------------------------------ |
-| `headers`     | `Record<string, string>`                     | `{}`        | Headers included in all requests                 |
-| `persistence` | `'session' \| { days: number } \| 'forever'` | `'forever'` | Guest ID cookie persistence                      |
-| `baseUrl`     | `string`                                     | `''`        | Base URL prefix for API requests                 |
-| `staleTime`   | `number`                                     | `5000`      | Milliseconds before data is considered stale    |
+| Option        | Type                                         | Default     | Description                                  |
+| ------------- | -------------------------------------------- | ----------- | -------------------------------------------- |
+| `headers`     | `Record<string, string>`                     | `{}`        | Headers included in all requests             |
+| `persistence` | `'session' \| { days: number } \| 'forever'` | `'forever'` | Guest ID cookie persistence                  |
+| `baseUrl`     | `string`                                     | `''`        | Base URL prefix for API requests             |
+| `staleTime`   | `number`                                     | `5000`      | Milliseconds before data is considered stale |
 
 ### `useBffState<T>(path, initialValue, options?)`
 
@@ -104,41 +104,45 @@ const {
   isUninitialized, // True before first fetch
   isFetching, // True during GET request
   isUpdating, // True during POST request
-} = useBffState('/api/cart', { items: [] }, {
-  skip: false, // Skip initial fetch
-  headers: { 'X-Hook': 'value' }, // Per-hook headers
-  refetchOnWindowFocus: true, // Refetch when tab becomes visible
-});
+} = useBffState(
+  '/api/cart',
+  { items: [] },
+  {
+    skip: false, // Skip initial fetch
+    headers: { 'X-Hook': 'value' }, // Per-hook headers
+    refetchOnWindowFocus: true, // Refetch when tab becomes visible
+  }
+);
 ```
 
 #### Parameters
 
-| Parameter      | Type                    | Description                                  |
-| -------------- | ----------------------- | -------------------------------------------- |
-| `path`         | `string`                | API endpoint path (e.g., `/api/cart`)        |
-| `initialValue` | `T`                     | Initial value before data is fetched         |
-| `options`      | `UseBffStateOptions`    | Optional configuration for this hook         |
+| Parameter      | Type                 | Description                           |
+| -------------- | -------------------- | ------------------------------------- |
+| `path`         | `string`             | API endpoint path (e.g., `/api/cart`) |
+| `initialValue` | `T`                  | Initial value before data is fetched  |
+| `options`      | `UseBffStateOptions` | Optional configuration for this hook  |
 
 #### Hook Options
 
-| Option                 | Type                     | Default | Description                              |
-| ---------------------- | ------------------------ | ------- | ---------------------------------------- |
-| `skip`                 | `boolean`                | `false` | Skip the initial fetch                   |
-| `headers`              | `Record<string, string>` | `{}`    | Additional headers (merged with provider)|
-| `refetchOnWindowFocus` | `boolean`                | `true`  | Refetch when tab becomes visible         |
+| Option                 | Type                     | Default | Description                               |
+| ---------------------- | ------------------------ | ------- | ----------------------------------------- |
+| `skip`                 | `boolean`                | `false` | Skip the initial fetch                    |
+| `headers`              | `Record<string, string>` | `{}`    | Additional headers (merged with provider) |
+| `refetchOnWindowFocus` | `boolean`                | `true`  | Refetch when tab becomes visible          |
 
 #### Return Value
 
-| Property          | Type                                    | Description                                |
-| ----------------- | --------------------------------------- | ------------------------------------------ |
-| `data`            | `T`                                     | Current state value                        |
-| `loading`         | `boolean`                               | True during fetch or update                |
-| `error`           | `Error \| null`                         | Error from last operation                  |
-| `update`          | `(newState: T \| (prev: T) => T) => Promise<void>` | Update state on server |
-| `refetch`         | `() => Promise<void>`                   | Manually refetch state                     |
-| `isUninitialized` | `boolean`                               | True before first fetch completes          |
-| `isFetching`      | `boolean`                               | True during GET request                    |
-| `isUpdating`      | `boolean`                               | True during POST request                   |
+| Property          | Type                                               | Description                       |
+| ----------------- | -------------------------------------------------- | --------------------------------- |
+| `data`            | `T`                                                | Current state value               |
+| `loading`         | `boolean`                                          | True during fetch or update       |
+| `error`           | `Error \| null`                                    | Error from last operation         |
+| `update`          | `(newState: T \| (prev: T) => T) => Promise<void>` | Update state on server            |
+| `refetch`         | `() => Promise<void>`                              | Manually refetch state            |
+| `isUninitialized` | `boolean`                                          | True before first fetch completes |
+| `isFetching`      | `boolean`                                          | True during GET request           |
+| `isUpdating`      | `boolean`                                          | True during POST request          |
 
 ## Patterns
 
@@ -220,15 +224,17 @@ function Counter() {
 
 ## Backend Setup
 
-This hook is designed to work with BFFless Data Tables and Pipelines. See the [BFFless documentation](https://docs.bffless.app/recipes/state-management) for setting up your backend.
+This hook is designed to work with BFFless Data Tables and Pipelines. See the [BFFless documentation](https://docs.bffless.app/recipes/state-management/) for setting up your backend.
 
 ### Expected API Behavior
 
 **GET `/api/state/:key`**
+
 - Returns the current state as JSON
 - Uses `?_bffGuestId=<uuid>` query parameter for user identification
 
 **POST `/api/state/:key`**
+
 - Accepts new state as JSON body
 - Returns the updated state as JSON
 - Uses `?_bffGuestId=<uuid>` query parameter for user identification
@@ -269,11 +275,11 @@ The library uses a `bff-guest-id` cookie to identify anonymous users across sess
 
 ### Persistence Options
 
-| Option            | Cookie Behavior                          |
-| ----------------- | ---------------------------------------- |
-| `'session'`       | Expires when browser closes              |
-| `{ days: N }`     | Persists for N days                      |
-| `'forever'`       | Persists for 400 days (browser maximum)  |
+| Option        | Cookie Behavior                         |
+| ------------- | --------------------------------------- |
+| `'session'`   | Expires when browser closes             |
+| `{ days: N }` | Persists for N days                     |
+| `'forever'`   | Persists for 400 days (browser maximum) |
 
 ## License
 
