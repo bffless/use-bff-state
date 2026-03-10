@@ -56,10 +56,13 @@ export function useBffState<T>(
     [JSON.stringify(providerOptions.headers), JSON.stringify(hookHeaders)]
   );
 
+  // Store the current AbortController for the fetch
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   /**
    * Fetches the current state from the server.
    */
-  const doFetch = useCallback(async () => {
+  const doFetch = useCallback(async (signal?: AbortSignal) => {
     if (!isMountedRef.current) return;
 
     setIsFetching(true);
@@ -70,6 +73,7 @@ export function useBffState<T>(
         guestId: getGuestId(),
         headers: mergedHeaders,
         baseUrl: providerOptions.baseUrl,
+        signal,
       });
 
       if (isMountedRef.current) {
@@ -78,6 +82,10 @@ export function useBffState<T>(
         lastFetchTimeRef.current = Date.now();
       }
     } catch (err) {
+      // Ignore abort errors
+      if (err instanceof Error && err.name === 'AbortError') {
+        return;
+      }
       if (isMountedRef.current) {
         setError(err instanceof Error ? err : new Error(String(err)));
       }
@@ -92,7 +100,10 @@ export function useBffState<T>(
    * Manually refetch the state from the server.
    */
   const refetch = useCallback(async () => {
-    await doFetch();
+    // Abort any in-flight request
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = new AbortController();
+    await doFetch(abortControllerRef.current.signal);
   }, [doFetch]);
 
   /**
@@ -141,11 +152,16 @@ export function useBffState<T>(
     isMountedRef.current = true;
 
     if (!skip) {
-      doFetch();
+      // Abort any previous request and create a new controller
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = new AbortController();
+      doFetch(abortControllerRef.current.signal);
     }
 
     return () => {
       isMountedRef.current = false;
+      // Abort in-flight request on unmount
+      abortControllerRef.current?.abort();
     };
     // Only run on mount and when skip changes
     // eslint-disable-next-line react-hooks/exhaustive-deps

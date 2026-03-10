@@ -1,0 +1,54 @@
+name: Deploy Cart Demo to Production
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'demo/cart/**'
+  workflow_dispatch:
+
+concurrency:
+  group: cart-demo-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build library
+        run: pnpm build
+
+      - name: Build Cart Demo
+        run: pnpm build
+        working-directory: demo/cart
+
+      - name: Upload build to production
+        uses: bffless/upload-artifact@v1
+        with:
+          path: demo/cart/dist
+          api-url: ${{ vars.ASSET_HOST_URL }}
+          api-key: ${{ secrets.ASSET_HOST_KEY }}
+          alias: production
+          description: 'Cart demo production deploy for ${{ github.ref_name }}@${{ github.sha }}'
+          summary-title: Cart Demo Production Deploy

@@ -1,0 +1,50 @@
+name: PR Cart Demo Preview
+
+on:
+  pull_request:
+    branches: ['*']
+    paths:
+      - 'demo/cart/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  build-and-preview:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build library
+        run: pnpm build
+
+      - name: Build Cart Demo
+        run: pnpm build
+        working-directory: demo/cart
+
+      - name: Upload build preview
+        uses: bffless/upload-artifact@v1
+        with:
+          path: demo/cart/dist
+          api-url: ${{ vars.ASSET_HOST_URL }}
+          api-key: ${{ secrets.ASSET_HOST_KEY }}
+          alias: preview
+          description: 'Cart demo preview for PR #${{ github.event.pull_request.number }}'
+          summary-title: Cart Demo Preview

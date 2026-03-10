@@ -5,6 +5,7 @@ export interface FetchOptions {
   guestId: string;
   headers?: Record<string, string>;
   baseUrl?: string;
+  signal?: AbortSignal;
 }
 
 /**
@@ -55,7 +56,7 @@ export async function fetchState<T>(
   path: string,
   options: FetchOptions
 ): Promise<T> {
-  const { guestId, headers, baseUrl } = options;
+  const { guestId, headers, baseUrl, signal } = options;
 
   const url = appendGuestIdParam(buildUrl(path, baseUrl), guestId);
 
@@ -66,6 +67,7 @@ export async function fetchState<T>(
       headers
     ),
     credentials: 'include',
+    signal,
   });
 
   if (!response.ok) {
@@ -86,7 +88,7 @@ export async function updateState<T>(
   data: T,
   options: FetchOptions
 ): Promise<T> {
-  const { guestId, headers, baseUrl } = options;
+  const { guestId, headers, baseUrl, signal } = options;
 
   const url = appendGuestIdParam(buildUrl(path, baseUrl), guestId);
 
@@ -98,6 +100,7 @@ export async function updateState<T>(
     ),
     credentials: 'include',
     body: JSON.stringify(data),
+    signal,
   });
 
   if (!response.ok) {
