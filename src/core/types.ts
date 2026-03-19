@@ -72,6 +72,11 @@ export interface UseBffStateResult<T> {
   data: T;
 
   /**
+   * The guest ID used for identifying this browser/session.
+   */
+  guestId: string;
+
+  /**
    * True during any loading operation (initial fetch or update).
    */
   loading: boolean;

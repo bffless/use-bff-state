@@ -3,6 +3,7 @@
 // React exports (primary API)
 export { BffStateProvider, type BffStateProviderProps } from './react/BffStateProvider';
 export { useBffState } from './react/useBffState';
+export { useGuestId } from './react/useGuestId';
 export { useBffStateContext, BffStateContext } from './react/context';
 
 // Type exports

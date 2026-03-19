@@ -191,6 +191,7 @@ export function useBffState<T>(
 
   return {
     data,
+    guestId: getGuestId(),
     loading: isFetching || isUpdating,
     error,
     update,
