@@ -159,6 +159,71 @@ describe('client utilities', () => {
         fetchState('/api/cart', { guestId: 'abc-123' })
       ).rejects.toThrow('Failed to fetch state: 404 Not Found - Resource not found');
     });
+
+    it('deduplicates concurrent requests to the same URL', async () => {
+      const expectedData = { items: ['a'] };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(expectedData),
+      });
+
+      // Fire two concurrent requests to the same path/guestId
+      const [result1, result2] = await Promise.all([
+        fetchState('/api/dedup', { guestId: 'same-id' }),
+        fetchState('/api/dedup', { guestId: 'same-id' }),
+      ]);
+
+      // Only one fetch call should have been made
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(result1).toEqual(expectedData);
+      expect(result2).toEqual(expectedData);
+    });
+
+    it('does not deduplicate requests to different URLs', async () => {
+      const data1 = { items: ['a'] };
+      const data2 = { items: ['b'] };
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(data1),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(data2),
+        });
+
+      const [result1, result2] = await Promise.all([
+        fetchState('/api/path1', { guestId: 'id-1' }),
+        fetchState('/api/path2', { guestId: 'id-1' }),
+      ]);
+
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(result1).toEqual(data1);
+      expect(result2).toEqual(data2);
+    });
+
+    it('allows new requests after deduped request completes', async () => {
+      const data1 = { count: 1 };
+      const data2 = { count: 2 };
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(data1),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(data2),
+        });
+
+      // First request
+      const result1 = await fetchState('/api/dedup2', { guestId: 'id' });
+      expect(result1).toEqual(data1);
+
+      // Second request (after first completed) should make a new fetch
+      const result2 = await fetchState('/api/dedup2', { guestId: 'id' });
+      expect(result2).toEqual(data2);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe('updateState', () => {

@@ -50,7 +50,14 @@ export function mergeHeaders(
 }
 
 /**
+ * In-flight GET request cache for deduplication.
+ * Multiple hooks requesting the same URL concurrently will share a single fetch.
+ */
+const inflightRequests = new Map<string, Promise<unknown>>();
+
+/**
  * Fetches state from the server via GET.
+ * Deduplicates concurrent requests to the same URL.
  */
 export async function fetchState<T>(
   path: string,
@@ -60,24 +67,71 @@ export async function fetchState<T>(
 
   const url = appendGuestIdParam(buildUrl(path, baseUrl), guestId);
 
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: mergeHeaders(
-      { 'Content-Type': 'application/json' },
-      headers
-    ),
-    credentials: 'include',
-    signal,
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => 'Unknown error');
-    throw new Error(
-      `Failed to fetch state: ${response.status} ${response.statusText} - ${errorText}`
-    );
+  // Check for an existing in-flight request to the same URL
+  const existing = inflightRequests.get(url);
+  if (existing) {
+    // If the caller has an abort signal, listen for it but don't abort the shared request
+    if (signal) {
+      return new Promise<T>((resolve, reject) => {
+        const onAbort = () => reject(new DOMException('The operation was aborted.', 'AbortError'));
+        if (signal.aborted) {
+          onAbort();
+          return;
+        }
+        signal.addEventListener('abort', onAbort, { once: true });
+        (existing as Promise<T>).then(
+          (val) => { signal.removeEventListener('abort', onAbort); resolve(val); },
+          (err) => { signal.removeEventListener('abort', onAbort); reject(err); }
+        );
+      });
+    }
+    return existing as Promise<T>;
   }
 
-  return response.json() as Promise<T>;
+  const request = (async () => {
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: mergeHeaders(
+          { 'Content-Type': 'application/json' },
+          headers
+        ),
+        credentials: 'include',
+        // Don't pass signal to the shared fetch — individual callers handle abort above
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'Unknown error');
+        throw new Error(
+          `Failed to fetch state: ${response.status} ${response.statusText} - ${errorText}`
+        );
+      }
+
+      return response.json() as Promise<T>;
+    } finally {
+      inflightRequests.delete(url);
+    }
+  })();
+
+  inflightRequests.set(url, request);
+
+  // If the caller has an abort signal, handle it without aborting the shared request
+  if (signal) {
+    return new Promise<T>((resolve, reject) => {
+      const onAbort = () => reject(new DOMException('The operation was aborted.', 'AbortError'));
+      if (signal.aborted) {
+        onAbort();
+        return;
+      }
+      signal.addEventListener('abort', onAbort, { once: true });
+      request.then(
+        (val) => { signal.removeEventListener('abort', onAbort); resolve(val); },
+        (err) => { signal.removeEventListener('abort', onAbort); reject(err); }
+      );
+    });
+  }
+
+  return request;
 }
 
 /**
