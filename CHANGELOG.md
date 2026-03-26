@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/bffless/use-bff-state/compare/v1.2.0...v1.3.0) (2026-03-26)
+
+
+### Features
+
+* deduplicate concurrent GET requests to the same URL ([aeed33c](https://github.com/bffless/use-bff-state/commit/aeed33cdea3ad9e61d926d63529fb3215b7c11fe))
+
 ## [1.2.0](https://github.com/bffless/use-bff-state/compare/v1.1.0...v1.2.0) (2026-03-19)
 
 
