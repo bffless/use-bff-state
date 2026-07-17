@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from 'react';
+import { useMemo, type ReactElement, type ReactNode } from 'react';
 import { BffStateContext, defaultOptions } from './context';
 import { createGuestIdManager } from '../core/cookie';
 import type { BffStateProviderOptions, BffStateContextValue } from '../core/types';
@@ -32,7 +32,7 @@ export interface BffStateProviderProps {
 export function BffStateProvider({
   options = {},
   children,
-}: BffStateProviderProps): JSX.Element {
+}: BffStateProviderProps): ReactElement {
   const contextValue = useMemo<BffStateContextValue>(() => {
     const mergedOptions: Required<BffStateProviderOptions> = {
       ...defaultOptions,
