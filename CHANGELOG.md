@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.1](https://github.com/bffless/use-bff-state/compare/v1.3.0...v1.3.1) (2026-07-17)
+
+
+### Bug Fixes
+
+* type BffStateProvider return as ReactElement for React 19 consumers ([8bac778](https://github.com/bffless/use-bff-state/commit/8bac7786d40b362dbe0fe5b98698e6b13654a80a))
+* type BffStateProvider return as ReactElement for React 19 consumers ([fb74477](https://github.com/bffless/use-bff-state/commit/fb74477f8101d73dcf5ace8835b4ee82c80f9bf9))
+
 ## [1.3.0](https://github.com/bffless/use-bff-state/compare/v1.2.0...v1.3.0) (2026-03-26)
 
 
